@@ -1,0 +1,181 @@
+Traceback (most recent call last):
+
+=== DATA PROFILE ===
+<class 'pandas.DataFrame'>
+RangeIndex: 891 entries, 0 to 890
+Data columns (total 15 columns):
+ #   Column       Non-Null Count  Dtype  
+---  ------       --------------  -----  
+ 0   survived     891 non-null    int64  
+ 1   pclass       891 non-null    int64  
+ 2   sex          891 non-null    str    
+ 3   age          714 non-null    float64
+ 4   sibsp        891 non-null    int64  
+ 5   parch        891 non-null    int64  
+ 6   fare         891 non-null    float64
+ 7   embarked     889 non-null    str    
+ 8   class        891 non-null    str    
+ 9   who          891 non-null    str    
+ 10  adult_male   891 non-null    bool   
+ 11  deck         203 non-null    str    
+ 12  embark_town  889 non-null    str    
+ 13  alive        891 non-null    str    
+ 14  alone        891 non-null    bool   
+dtypes: bool(2), float64(2), int64(4), str(7)
+memory usage: 116.9 KB
+None
+
+=== DESCRIBE ===
+  File "C:\Users\u\Downloads\end-to-end\analytics\titanic_pipeline.py", line 455, in <module>
+    main()
+  File "C:\Users\u\Downloads\end-to-end\analytics\titanic_pipeline.py", line 439, in main
+    class_df = classification_models(X_train, X_test, y_train, y_test)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\Downloads\end-to-end\analytics\titanic_pipeline.py", line 272, in classification_models
+    pipeline.fit(X_train, y_train)
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\base.py", line 1473, in wrapper
+             count unique          top freq  ...     25%      50%   75%       max
+survived     891.0    NaN          NaN  NaN  ...     0.0      0.0   1.0       1.0
+pclass       891.0    NaN          NaN  NaN  ...     2.0      3.0   3.0       3.0
+sex            891      2         male  577  ...     NaN      NaN   NaN       NaN
+age          714.0    NaN          NaN  NaN  ...  20.125     28.0  38.0      80.0
+sibsp        891.0    NaN          NaN  NaN  ...     0.0      0.0   1.0       8.0
+parch        891.0    NaN          NaN  NaN  ...     0.0      0.0   0.0       6.0
+fare         891.0    NaN          NaN  NaN  ...  7.9104  14.4542  31.0  512.3292
+embarked       889      3            S  644  ...     NaN      NaN   NaN       NaN
+class          891      3        Third  491  ...     NaN      NaN   NaN       NaN
+who            891      3          man  537  ...     NaN      NaN   NaN       NaN
+adult_male     891      2         True  537  ...     NaN      NaN   NaN       NaN
+deck           203      7            C   59  ...     NaN      NaN   NaN       NaN
+embark_town    889      3  Southampton  644  ...     NaN      NaN   NaN       NaN
+alive          891      2           no  549  ...     NaN      NaN   NaN       NaN
+alone          891      2         True  537  ...     NaN      NaN   NaN       NaN
+
+[15 rows x 11 columns]
+
+Shape: (891, 15)
+
+Missing percentages:
+deck           77.22
+age            19.87
+embarked        0.22
+embark_town     0.22
+
+=== MISSING VALUE STRATEGY ===
+age: 19.87% -> impute
+embarked: 0.22% -> drop_rows
+deck: 77.22% -> drop_column
+embark_town: 0.22% -> drop_rows
+
+Cleaned shape: (889, 14)
+age outliers (IQR rule): 65
+fare outliers (IQR rule): 114
+Fare mean=32.10, median=14.45, mode=8.05
+Fare is right-skewed because mean > median > mode.
+
+=== SURVIVAL RATES ===
+By sex:
+ sex
+female    0.7404
+male      0.1889
+Name: survived, dtype: float64
+
+By pclass:
+ pclass
+3    0.2424
+2    0.4728
+1    0.6262
+Name: survived, dtype: float64
+
+By sex and pclass:
+ pclass       1       2       3
+sex                           
+female  0.9674  0.9211  0.5000
+male    0.3689  0.1574  0.1354
+
+Top 2 absolute off-diagonal correlations:
+  var1   var2    corr  abs_corr
+pclass   fare -0.5482    0.5482
+  fare pclass -0.5482    0.5482
+
+Chart files generated: survival_by_sex, fare_by_pclass, age_fare_survival, age_by_sex_survival
+
+=== STANDARDIZATION CHECK ===
+Age z-score mean/std: 0.0000, 1.0000
+Fare z-score mean/std: 0.0000, 1.0000
+
+=== TRAIN/TEST SPLIT ===
+Train size: 711; Test size: 178
+Stratification matters because the target class balance is not even; it preserves the same survived/not-survived ratio in both splits.
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\pipeline.py", line 469, in fit
+    Xt = self._fit(X, y, routed_params)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\pipeline.py", line 406, in _fit
+    X, fitted_transformer = fit_transform_one_cached(
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\joblib\memory.py", line 326, in __call__
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\pipeline.py", line 1310, in _fit_transform_one
+    res = transformer.fit_transform(X, y, **params.get("fit_transform", {}))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\utils\_set_output.py", line 313, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\base.py", line 1473, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\compose\_column_transformer.py", line 976, in fit_transform
+    result = self._call_func_on_transformers(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\compose\_column_transformer.py", line 885, in _call_func_on_transformers
+    return Parallel(n_jobs=self.n_jobs)(jobs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\utils\parallel.py", line 74, in __call__
+    return super().__call__(iterable_with_config)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\joblib\parallel.py", line 1986, in __call__
+    return output if self.return_generator else list(output)
+                                                ^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\joblib\parallel.py", line 1914, in _get_sequential_output
+    res = func(*args, **kwargs)
+          ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\utils\parallel.py", line 136, in __call__
+    return self.function(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\pipeline.py", line 1310, in _fit_transform_one
+    res = transformer.fit_transform(X, y, **params.get("fit_transform", {}))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\base.py", line 1473, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\pipeline.py", line 533, in fit_transform
+    Xt = self._fit(X, y, routed_params)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\pipeline.py", line 406, in _fit
+    X, fitted_transformer = fit_transform_one_cached(
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\joblib\memory.py", line 326, in __call__
+    return self.func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\pipeline.py", line 1310, in _fit_transform_one
+    res = transformer.fit_transform(X, y, **params.get("fit_transform", {}))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\utils\_set_output.py", line 313, in wrapped
+    data_to_wrap = f(self, X, *args, **kwargs)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\base.py", line 1101, in fit_transform
+    return self.fit(X, y, **fit_params).transform(X)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\base.py", line 1473, in wrapper
+    return fit_method(estimator, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\impute\_base.py", line 421, in fit
+    X = self._validate_input(X, in_fit=True)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\u\AppData\Roaming\Python\Python311\site-packages\sklearn\impute\_base.py", line 348, in _validate_input
+    raise new_ve from None
+ValueError: Cannot use constant strategy with non-numeric data:
+could not convert string to float: 'male'

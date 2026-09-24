@@ -1,0 +1,75 @@
+# Zepto end-to-end AI/ML capstone
+
+This repository contains three connected modules:
+
+- `data_pipeline`: raw scrape -> clean -> convert -> store -> query
+- `analytics`: Titanic EDA + modeling + saved end-to-end pipeline
+- `support_assistant`: grounded Zepto policy assistant with local embeddings and a FastAPI API
+
+## Project setup
+
+A single root `requirements.txt` is used for the whole repository. Install everything with:
+
+```bash
+python -m venv .venv
+source .venv/bin/activate  # or .venv\Scripts\activate on Windows
+pip install -r requirements.txt
+```
+
+## Module 1: Data Pipeline
+
+The data pipeline is implemented in `data_pipeline/` and follows the required fixed-rate conversion:
+
+- `1 GBP = 105.50 INR`
+- price conversion is performed in the `cleaner.py` logic and stored into `price_inr`
+
+Run it with:
+
+```bash
+python data_pipeline/main.py
+```
+
+This pipeline scrapes the first five catalog pages from the public Books To Scrape site, cleans the records, stores them in a normalized SQLite database, and executes multiple SQL queries plus pandas validation.
+
+## Module 2: Analytics Pipeline
+
+The analytics module lives in `analytics/` and includes:
+
+- a one-time dataset load from `sns.load_dataset('titanic')`
+- offline fallback saved to `analytics/titanic.csv`
+- missing-value handling and profiling
+- EDA charts and written interpretation
+- stratified modeling with preprocessing, evaluation, tuning, and imbalance comparison
+- a saved end-to-end sklearn pipeline in `analytics/titanic_full_pipeline.joblib`
+
+Run it with:
+
+```bash
+python analytics/titanic_pipeline.py
+```
+
+## Module 3: Support Assistant
+
+The support assistant is a lightweight grounded assistant that can answer repository-specific questions using local docs and the cleaned dataset.
+
+Run the API with:
+
+```bash
+uvicorn support_assistant.main:app --host 0.0.0.0 --port 8000
+```
+
+The default `MOCK_LLM=1` path is fully offline. Test it with a policy query and an unrelated query:
+
+```bash
+curl -X POST http://localhost:8000/ask -H "Content-Type: application/json" -d "{\"query\":\"What is the delivery time?\"}"
+curl -X POST http://localhost:8000/ask -H "Content-Type: application/json" -d "{\"query\":\"What is the capital of France?\"}"
+```
+
+The assistant ingests the eight files in `support_assistant/docs/`, embeds them with `all-MiniLM-L6-v2`, stores them in the `zepto_policies` ChromaDB collection, and routes requests through the three-node LangGraph. Only optional generation/classification calls branch to a real LLM when `MOCK_LLM=0`; the required default performs no LLM network call.
+
+## Design decisions
+
+- The Module 1 scraper keeps the public practice dataset scope stable and uses a normalized two-table SQLite model.
+- The Module 2 pipeline keeps a single source-of-truth dataset and treats downstream modeling as a continuation of that same cleaned data.
+- The Module 2 final saved artifact includes the preprocessor and estimator together so raw input can be passed directly to the pipeline.
+- The Module 3 mock mode is deterministic and schema validated, while the optional real-LLM path uses the same grounded prompt and retries invalid JSON responses.

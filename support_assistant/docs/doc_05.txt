@@ -1,0 +1,3 @@
+Order Cancellation
+
+Orders can be cancelled before the rider is assigned. Once the rider is assigned, cancellation is not guaranteed. Customers should check the app for the current status before requesting cancellation.
