@@ -63,16 +63,16 @@ The support assistant is a lightweight grounded assistant that answers Zepto pol
 Run the browser-first chatbot from the repository root with:
 
 ```bash
-python -m uvicorn support_assistant.main:app --host 0.0.0.0 --port 8000
+python -m uvicorn support_assistant.main:app --host 127.0.0.1 --port 8001
 ```
 
-Open `http://127.0.0.1:8000/` in a browser. The visible product is the chat interface; its internal `POST /ask` route is retained for the FastAPI contract and automated grading. Swagger and ReDoc are disabled.
+Open `http://127.0.0.1:8001/` in a browser. The visible product is the chat interface; its internal `POST /ask` route is retained for the FastAPI contract and automated grading. Swagger and ReDoc are disabled.
 
 The default `MOCK_LLM=1` path is fully offline and requires no API key. The chat routes policy questions through retrieval and returns a deterministic answer grounded in the top ChromaDB result; unrelated questions receive the fixed general-question response.
 
 ```bash
 # Optional API-level verification of the same chat flow:
-curl -X POST http://localhost:8000/ask -H "Content-Type: application/json" -d "{\"query\":\"What is the delivery time?\"}"
+curl -X POST http://localhost:8001/ask -H "Content-Type: application/json" -d "{\"query\":\"What is the delivery time?\"}"
 ```
 
 The assistant ingests the eight files in `support_assistant/docs/`, embeds one chunk per document with `all-MiniLM-L6-v2`, stores vectors in the `zepto_policies` ChromaDB collection, and routes requests through the three-node LangGraph. Only intent classification and answer generation branch to a real LLM when `MOCK_LLM=0`; retrieval always uses local embeddings and ChromaDB. The required default performs no LLM network call.

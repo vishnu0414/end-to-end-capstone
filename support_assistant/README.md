@@ -1,20 +1,20 @@
-# Support Assistant
+# Module 3: Zepto Support Assistant
 
-## 1. Project Overview
+## Overview
 
-This module implements a lightweight offline RAG-style support assistant for Zepto policy questions. The project follows a grounded retrieval pipeline:
+This module implements a chat-based support assistant for Zepto policy questions. It is built as a local, grounded retrieval system that answers policy queries from a small document corpus and returns a deterministic response in the default offline mode.
 
-ingestion
-   ↓
-embedding
-   ↓
-retrieval
-   ↓
-generation
+The app uses:
 
-It keeps the baseline fully offline and deterministic by default using `MOCK_LLM=1`.
+- OpenAI-compatible response handling in the optional non-mock path
+- ChromaDB as the persistent vector store
+- SentenceTransformers for local embedding generation
+- LangGraph for the request-routing flow
+- FastAPI for the browser UI and `/ask` contract
 
-## 2. Folder Structure
+The required baseline is fully offline and uses `MOCK_LLM=1` by default.
+
+## Folder structure
 
 ```text
 support_assistant/
@@ -37,76 +37,111 @@ support_assistant/
 │   ├── doc_07.txt
 │   └── doc_08.txt
 ├── chroma_db/
-└── __init__.py
+├── __init__.py
+└── test_assistant.py
 ```
 
-## 3. Installation
+## Quick start
+
+### 1) Create a virtual environment
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
+# macOS/Linux
+source .venv/bin/activate
+# Windows PowerShell
+.venv\Scripts\Activate.ps1
+```
+
+### 2) Install dependencies
+
+```bash
 pip install -r requirements.txt
 ```
 
-The repository also provides one consolidated root `requirements.txt`; installing that file from the repository root installs all three capstone modules.
+If you are starting from the repository root, you can also install the consolidated dependency list there:
 
-## 4. Document Ingestion
+```bash
+pip install -r requirements.txt
+```
 
-The source policy corpus is stored in `support_assistant/docs/` as eight policy documents. Each file is read and added to Chroma as a document chunk.
+### 3) Start the app
 
-- `retrieval.py` handles the ingestion flow.
-- `doc_01.txt` → Delivery Policy
-- `doc_02.txt` → Returns & Refunds
-- `doc_03.txt` → Membership Tiers
-- `doc_04.txt` → Order Tracking
-- `doc_05.txt` → Order Cancellation
-- `doc_06.txt` → Damaged/Missing Items
-- `doc_07.txt` → Gift Cards
-- `doc_08.txt` → Customer Support Hours
+From the repository root:
 
-## 5. Embedding
+```bash
+python -m uvicorn support_assistant.main:app --host 127.0.0.1 --port 8001
+```
 
-The embedding layer uses the required model:
+Or from the module folder:
+
+```bash
+cd support_assistant
+python -m uvicorn main:app --host 127.0.0.1 --port 8001
+```
+
+Open:
+
+```text
+http://127.0.0.1:8001/
+```
+
+The browser page is the visible support chat UI. The API contract remains the internal `POST /ask` endpoint used by the frontend and by grading scripts.
+
+## Document corpus
+
+The assistant loads eight local Zepto policy documents from `support_assistant/docs/`.
+
+- `doc_01.txt` — Delivery Policy
+- `doc_02.txt` — Returns & Refunds
+- `doc_03.txt` — Membership Tiers
+- `doc_04.txt` — Order Tracking
+- `doc_05.txt` — Order Cancellation
+- `doc_06.txt` — Damaged/Missing Items
+- `doc_07.txt` — Gift Cards
+- `doc_08.txt` — Customer Support Hours
+
+These files are ingested and indexed into a persistent ChromaDB collection named `zepto_policies`.
+
+## Embedding and retrieval flow
+
+The retrieval layer uses:
 
 ```python
 SentenceTransformer("all-MiniLM-L6-v2")
 ```
 
-This is configured in `config.py` as `EMBEDDING_MODEL = "all-MiniLM-L6-v2"`.
-
-## 6. ChromaDB
-
-The vector store uses persistent ChromaDB:
+and stores vectors in the local Chroma collection configured in `config.py`:
 
 ```python
-client = chromadb.PersistentClient(path="./chroma_db")
-collection = client.get_or_create_collection(
-    name="zepto_policies",
-    metadata={"hnsw:space": "cosine"}
-)
+EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+CHROMA_PATH = "./chroma_db"
+COLLECTION_NAME = "zepto_policies"
 ```
 
-This is implemented in `retrieval.py`.
+The retrieval logic reads each document, chunks it, embeds the text, and stores the vectors for cosine-similarity lookup. The app converts incoming policy questions into embeddings and retrieves the most relevant results before generating an answer.
 
-## 7. LangGraph Architecture
+## LangGraph architecture
 
-The graph contains the required nodes and conditional routing:
+The graph contains three main nodes:
 
-- `classify_intent` in `graph.py`
-- `retrieve_and_answer` in `graph.py`
-- `direct_answer` in `graph.py`
+- `classify_intent`
+- `retrieve_and_answer`
+- `direct_answer`
 
-Routing logic:
+Routing is:
 
 ```text
 classify_intent
-    ├── policy_question → retrieve_and_answer
-    └── general_question → direct_answer
+    ├── policy question → retrieve_and_answer
+    └── general question → direct_answer
 ```
 
-## 8. MOCK_LLM
+This ensures grounded policy questions are answered from retrieved sources, while unrelated questions receive the fixed fallback response.
 
-The application is designed for an offline mock mode baseline. `MOCK_LLM` is read from the environment in `config.py`:
+## Mock vs real LLM behavior
+
+`MOCK_LLM` is defined in `config.py` and defaults to `1`:
 
 ```python
 MOCK_LLM = os.getenv("MOCK_LLM", "1")
@@ -114,30 +149,24 @@ MOCK_LLM = os.getenv("MOCK_LLM", "1")
 
 Behavior:
 
-- `MOCK_LLM` unset → mock mode
+- `MOCK_LLM` unset → offline mock mode
 - `MOCK_LLM=1` → mock mode
-- `MOCK_LLM=0` → optional real LLM path
+- `MOCK_LLM=0` → optional Groq-compatible real LLM path
 
-When `MOCK_LLM=0`, the optional Groq-compatible path reads `GROQ_API_KEY` and `GROQ_MODEL` from the environment. Responses are parsed with `AskResponse` and retried twice with a corrective JSON instruction if validation fails. The default mock path does not require either variable.
+The grading baseline must remain the default mock mode. The mock path is deterministic, schema-safe, and does not require any API key.
 
-The configured real-LLM model is `openai/gpt-oss-120b`. Set the key only in your local environment; never place it in source control:
-
-PowerShell:
+For a local real-LLM run, you can set the environment variables and start the app as follows:
 
 ```powershell
 $env:MOCK_LLM = "0"
 $env:GROQ_MODEL = "openai/gpt-oss-120b"
 $env:GROQ_API_KEY = "PASTE_A_NEW_ROTATED_KEY_HERE"
-python -m uvicorn main:app --host 0.0.0.0 --port 8001
+python -m uvicorn support_assistant.main:app --host 0.0.0.0 --port 8001
 ```
 
-The required grading path remains the default `MOCK_LLM=1` mode and does not call Groq.
+## API contract
 
-The grading baseline is mock mode.
-
-## 9. Pydantic Schema
-
-`models.py` defines:
+The request schema is defined in `models.py`:
 
 ```python
 class AskRequest(BaseModel):
@@ -149,9 +178,7 @@ class AskResponse(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
 ```
 
-## 10. Browser Chat and FastAPI
-
-The browser-first chat interface is exposed at `/`, and the web API is kept as the internal `POST /ask` contract used by the interface and automated grading. Swagger and ReDoc are disabled so the app opens directly as a chatbot rather than an endpoint catalog. Both are implemented in `main.py`:
+The FastAPI route is:
 
 ```python
 @app.post("/ask", response_model=AskResponse)
@@ -159,22 +186,9 @@ def ask_support(request: AskRequest) -> AskResponse:
     return run_graph(request.query)
 ```
 
-Run:
+## Example requests
 
-```bash
-cd support_assistant
-python -m uvicorn main:app --host 0.0.0.0 --port 8001
-```
-
-From the repository root, use `python -m uvicorn support_assistant.main:app --host 0.0.0.0 --port 8001`.
-
-Open `http://127.0.0.1:8001/` to use the chatbot. The frontend submits the question to `/ask`, renders the grounded answer, lists retrieved chunk IDs, and displays confidence. The visible product does not expose an endpoint catalog.
-
-## 11. Example Requests
-
-### Policy Question
-
-Request:
+### Policy question
 
 ```json
 {
@@ -182,19 +196,17 @@ Request:
 }
 ```
 
-Response:
+Expected shape:
 
 ```json
 {
   "answer": "Based on the retrieved context: Zepto delivers grocery and household essentials to serviceable pin codes within 10 to 30 minutes.",
-  "sources": ["doc_01_chunk_01", "doc_06_chunk_01", "doc_08_chunk_01"],
+  "sources": ["doc_01_chunk_01"],
   "confidence": 1.0
 }
 ```
 
-### General Question
-
-Request:
+### General question
 
 ```json
 {
@@ -202,7 +214,7 @@ Request:
 }
 ```
 
-Response:
+Expected shape:
 
 ```json
 {
@@ -212,9 +224,9 @@ Response:
 }
 ```
 
-## 12. Docker
+## Docker
 
-A local Dockerfile is provided at `support_assistant/Dockerfile`.
+A Dockerfile is available in `support_assistant/Dockerfile`.
 
 Build:
 
@@ -237,17 +249,19 @@ curl -X POST http://localhost:7860/ask \
   -d '{"query":"What is the delivery time?"}'
 ```
 
-## 13. RAG Architecture
+## Resulting behavior
 
-The architecture is:
+The app behaves as a grounded policy assistant:
 
-```text
-ingestion -> embedding -> retrieval -> generation
-```
+- policy questions are answered using retrieved local policy passages
+- unrelated questions fall back to a short fixed response
+- the visible front-end is a browser chat UI at `/`
+- the backend retains a JSON `/ask` API for grading and automation
+- the default path remains local and deterministic, with no API-key requirement
 
-- Ingestion: `retrieval.py` reads the eight files in `docs/*.txt` and creates one chunk per document with IDs such as `doc_01_chunk_01`.
-- Embedding: `SentenceTransformer("all-MiniLM-L6-v2")` encodes each chunk and each incoming policy query locally.
-- Storage and retrieval: the vectors are stored in the persistent `zepto_policies` ChromaDB collection. `retrieve_and_answer()` imports `retrieve_top_k()` from `retrieval.py`, queries the collection with cosine similarity, and passes the top three chunks to generation.
+## Summary
+
+Module 3 delivers a local, deterministic support assistant that demonstrates end-to-end retrieval and response generation in a grounded RAG workflow while keeping the required grading path fully offline by default.
 - Generation: `graph.py` builds the `StateGraph` with `classify_intent`, `retrieve_and_answer`, and `direct_answer`. The conditional edge routes policy questions to retrieval and general questions directly to `direct_answer`. The optional real path uses the role-context-task-format-length prompt in `prompts.py`; the default mock path returns a deterministic top-chunk template or fixed general response.
 
 Data flows as `docs/*.txt -> local embeddings -> ChromaDB -> LangGraph routing -> grounded response -> browser chat`. Retrieval is never replaced by an LLM. With `MOCK_LLM` unset or set to `1`, intent classification uses the required keyword heuristic and both answer nodes use deterministic local responses. Only when `MOCK_LLM=0` is explicitly set do intent classification and final answer generation call the optional Groq-compatible model; invalid structured output is retried twice before a marked error response.
