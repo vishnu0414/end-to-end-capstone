@@ -228,3 +228,5 @@ ingestion -> embedding -> retrieval -> generation
 - Embedding: `SentenceTransformer("all-MiniLM-L6-v2")` from `retrieval.py`.
 - Retrieval: `retrieve_top_k()` in `retrieval.py` queries the Chroma collection.
 - Generation: `retrieve_and_answer()` and `direct_answer()` in `graph.py` produce the final response in mock mode.
+
+The committed ChromaDB directory is a regenerable local artifact; importing `retrieval.py` also re-ingests any missing policy chunks from `docs/`.
