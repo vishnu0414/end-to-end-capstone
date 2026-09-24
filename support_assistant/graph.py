@@ -11,12 +11,10 @@ try:
     from support_assistant.config import GROQ_MODEL, MOCK_LLM
     from support_assistant.models import AskResponse
     from support_assistant.prompts import build_prompt
-    from support_assistant.retrieval import retrieve_top_k
 except ImportError:  # pragma: no cover
     from config import GROQ_MODEL, MOCK_LLM
     from models import AskResponse
     from prompts import build_prompt
-    from retrieval import retrieve_top_k
 
 POLICY_KEYWORDS = {
     "delivery",
@@ -103,6 +101,11 @@ def _real_answer(query: str, chunks: list[dict]) -> AskResponse:
 
 
 def retrieve_and_answer(state: GraphState) -> GraphState:
+    try:
+        from support_assistant.retrieval import retrieve_top_k
+    except ImportError:  # pragma: no cover
+        from retrieval import retrieve_top_k
+
     chunks = retrieve_top_k(state["query"], k=3)
     state["retrieved_chunks"] = chunks
     state["sources"] = [chunk["id"] for chunk in chunks]

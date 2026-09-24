@@ -148,7 +148,7 @@ class AskResponse(BaseModel):
 
 ## 10. FastAPI
 
-The web API is exposed via `main.py`:
+The browser-first chat interface is exposed at `/`, and the web API is kept as the internal `POST /ask` contract used by the interface and automated grading. Swagger and ReDoc are disabled so the app opens directly as a chatbot rather than an endpoint catalog. Both are implemented in `main.py`:
 
 ```python
 @app.post("/ask", response_model=AskResponse)
