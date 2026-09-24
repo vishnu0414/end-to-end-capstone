@@ -147,8 +147,10 @@ Run:
 
 ```bash
 cd support_assistant
-uvicorn main:app --reload
+python -m uvicorn main:app --host 0.0.0.0 --port 8000
 ```
+
+From the repository root, use `python -m uvicorn support_assistant.main:app --host 0.0.0.0 --port 8000`.
 
 ## 11. Example Requests
 

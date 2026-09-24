@@ -63,8 +63,11 @@ The support assistant is a lightweight grounded assistant that answers Zepto pol
 Run the API with:
 
 ```bash
+# Run this command from the repository root.
 uvicorn support_assistant.main:app --host 0.0.0.0 --port 8000
 ```
+
+When your current directory is `support_assistant/`, use `python -m uvicorn main:app --host 0.0.0.0 --port 8000` instead.
 
 The default `MOCK_LLM=1` path is fully offline. Test it with a policy query and an unrelated query:
 
