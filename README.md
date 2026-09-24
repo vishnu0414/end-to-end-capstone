@@ -6,6 +6,14 @@ This repository contains three connected modules:
 - `analytics`: Titanic EDA + modeling + saved end-to-end pipeline
 - `support_assistant`: grounded Zepto policy assistant with local embeddings and a FastAPI API
 
+## Submission repository
+
+This project is submitted as one public repository:
+
+https://github.com/vishnu0414/end-to-end-capstone
+
+The repository contains the three module folders at its root and uses one consolidated root `requirements.txt`.
+
 ## Project setup
 
 A single root `requirements.txt` is used for the whole repository. Install everything with:
@@ -50,7 +58,7 @@ python analytics/titanic_pipeline.py
 
 ## Module 3: Support Assistant
 
-The support assistant is a lightweight grounded assistant that can answer repository-specific questions using local docs and the cleaned dataset.
+The support assistant is a lightweight grounded assistant that answers Zepto policy questions using the eight local policy documents.
 
 Run the API with:
 
@@ -73,3 +81,10 @@ The assistant ingests the eight files in `support_assistant/docs/`, embeds them 
 - The Module 2 pipeline keeps a single source-of-truth dataset and treats downstream modeling as a continuation of that same cleaned data.
 - The Module 2 final saved artifact includes the preprocessor and estimator together so raw input can be passed directly to the pipeline.
 - The Module 3 mock mode is deterministic and schema validated, while the optional real-LLM path uses the same grounded prompt and retries invalid JSON responses.
+
+## Submission checklist
+
+- All required source code and interpretations are stored as `.py`, `.ipynb`, or Markdown files inside this repository.
+- Generated chart PNGs are supporting artifacts only; written interpretations remain in `analytics/README.md` and the notebooks.
+- Git history includes the `feature/capstone-merge` branch with two commits merged into `main`.
+- The required baseline uses no paid services: scraping, Titanic fallback data, local embeddings, ChromaDB, and mock LLM responses run locally or through the stated free public data source.
