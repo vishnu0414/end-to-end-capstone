@@ -8,12 +8,12 @@ import requests
 from langgraph.graph import END, START, StateGraph
 
 try:
-    from support_assistant.config import MOCK_LLM
+    from support_assistant.config import GROQ_MODEL, MOCK_LLM
     from support_assistant.models import AskResponse
     from support_assistant.prompts import build_prompt
     from support_assistant.retrieval import retrieve_top_k
 except ImportError:  # pragma: no cover
-    from config import MOCK_LLM
+    from config import GROQ_MODEL, MOCK_LLM
     from models import AskResponse
     from prompts import build_prompt
     from retrieval import retrieve_top_k
@@ -66,7 +66,7 @@ def _call_real_llm(prompt: str) -> str:
         "https://api.groq.com/openai/v1/chat/completions",
         headers={"Authorization": f"Bearer {api_key}"},
         json={
-            "model": os.getenv("GROQ_MODEL", "llama-3.1-8b-instant"),
+            "model": GROQ_MODEL,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0,
         },

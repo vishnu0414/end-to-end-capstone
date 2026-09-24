@@ -117,6 +117,19 @@ Behavior:
 
 When `MOCK_LLM=0`, the optional Groq-compatible path reads `GROQ_API_KEY` and `GROQ_MODEL` from the environment. Responses are parsed with `AskResponse` and retried twice with a corrective JSON instruction if validation fails. The default mock path does not require either variable.
 
+The configured real-LLM model is `openai/gpt-oss-120b`. Set the key only in your local environment; never place it in source control:
+
+PowerShell:
+
+```powershell
+$env:MOCK_LLM = "0"
+$env:GROQ_MODEL = "openai/gpt-oss-120b"
+$env:GROQ_API_KEY = "PASTE_A_NEW_ROTATED_KEY_HERE"
+python -m uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+The required grading path remains the default `MOCK_LLM=1` mode and does not call Groq.
+
 The grading baseline is mock mode.
 
 ## 9. Pydantic Schema
