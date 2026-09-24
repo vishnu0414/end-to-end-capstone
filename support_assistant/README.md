@@ -128,7 +128,7 @@ PowerShell:
 $env:MOCK_LLM = "0"
 $env:GROQ_MODEL = "openai/gpt-oss-120b"
 $env:GROQ_API_KEY = "PASTE_A_NEW_ROTATED_KEY_HERE"
-python -m uvicorn main:app --host 0.0.0.0 --port 8000
+python -m uvicorn main:app --host 0.0.0.0 --port 8001
 ```
 
 The required grading path remains the default `MOCK_LLM=1` mode and does not call Groq.
@@ -163,12 +163,12 @@ Run:
 
 ```bash
 cd support_assistant
-python -m uvicorn main:app --host 0.0.0.0 --port 8000
+python -m uvicorn main:app --host 0.0.0.0 --port 8001
 ```
 
-From the repository root, use `python -m uvicorn support_assistant.main:app --host 0.0.0.0 --port 8000`.
+From the repository root, use `python -m uvicorn support_assistant.main:app --host 0.0.0.0 --port 8001`.
 
-Open `http://127.0.0.1:8000/` to use the chatbot. The frontend submits the question to `/ask`, renders the grounded answer, lists retrieved chunk IDs, and displays confidence. The visible product does not expose an endpoint catalog.
+Open `http://127.0.0.1:8001/` to use the chatbot. The frontend submits the question to `/ask`, renders the grounded answer, lists retrieved chunk IDs, and displays confidence. The visible product does not expose an endpoint catalog.
 
 ## 11. Example Requests
 
