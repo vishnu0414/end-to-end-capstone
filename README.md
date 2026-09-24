@@ -60,23 +60,22 @@ python analytics/titanic_pipeline.py
 
 The support assistant is a lightweight grounded assistant that answers Zepto policy questions using the eight local policy documents.
 
-Run the API with:
+Run the browser-first chatbot from the repository root with:
 
 ```bash
-# Run this command from the repository root.
-uvicorn support_assistant.main:app --host 0.0.0.0 --port 8000
+python -m uvicorn support_assistant.main:app --host 0.0.0.0 --port 8000
 ```
 
-When your current directory is `support_assistant/`, use `python -m uvicorn main:app --host 0.0.0.0 --port 8000` instead.
+Open `http://127.0.0.1:8000/` in a browser. The visible product is the chat interface; its internal `POST /ask` route is retained for the FastAPI contract and automated grading. Swagger and ReDoc are disabled.
 
-The default `MOCK_LLM=1` path is fully offline. Test it with a policy query and an unrelated query:
+The default `MOCK_LLM=1` path is fully offline and requires no API key. The chat routes policy questions through retrieval and returns a deterministic answer grounded in the top ChromaDB result; unrelated questions receive the fixed general-question response.
 
 ```bash
+# Optional API-level verification of the same chat flow:
 curl -X POST http://localhost:8000/ask -H "Content-Type: application/json" -d "{\"query\":\"What is the delivery time?\"}"
-curl -X POST http://localhost:8000/ask -H "Content-Type: application/json" -d "{\"query\":\"What is the capital of France?\"}"
 ```
 
-The assistant ingests the eight files in `support_assistant/docs/`, embeds them with `all-MiniLM-L6-v2`, stores them in the `zepto_policies` ChromaDB collection, and routes requests through the three-node LangGraph. Only optional generation/classification calls branch to a real LLM when `MOCK_LLM=0`; the required default performs no LLM network call.
+The assistant ingests the eight files in `support_assistant/docs/`, embeds one chunk per document with `all-MiniLM-L6-v2`, stores vectors in the `zepto_policies` ChromaDB collection, and routes requests through the three-node LangGraph. Only intent classification and answer generation branch to a real LLM when `MOCK_LLM=0`; retrieval always uses local embeddings and ChromaDB. The required default performs no LLM network call.
 
 ## Design decisions
 
@@ -84,6 +83,7 @@ The assistant ingests the eight files in `support_assistant/docs/`, embeds them 
 - The Module 2 pipeline keeps a single source-of-truth dataset and treats downstream modeling as a continuation of that same cleaned data.
 - The Module 2 final saved artifact includes the preprocessor and estimator together so raw input can be passed directly to the pipeline.
 - The Module 3 mock mode is deterministic and schema validated, while the optional real-LLM path uses the same grounded prompt and retries invalid JSON responses.
+- The Module 3 user experience is a browser chat at `/`; the rubric-required `POST /ask` route is an internal JSON boundary rather than the visible interface.
 
 ## Submission checklist
 

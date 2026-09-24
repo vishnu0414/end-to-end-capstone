@@ -43,9 +43,12 @@ support_assistant/
 ## 3. Installation
 
 ```bash
-cd support_assistant
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
+
+The repository also provides one consolidated root `requirements.txt`; installing that file from the repository root installs all three capstone modules.
 
 ## 4. Document Ingestion
 
@@ -146,7 +149,7 @@ class AskResponse(BaseModel):
     confidence: float = Field(ge=0.0, le=1.0)
 ```
 
-## 10. FastAPI
+## 10. Browser Chat and FastAPI
 
 The browser-first chat interface is exposed at `/`, and the web API is kept as the internal `POST /ask` contract used by the interface and automated grading. Swagger and ReDoc are disabled so the app opens directly as a chatbot rather than an endpoint catalog. Both are implemented in `main.py`:
 
@@ -165,6 +168,8 @@ python -m uvicorn main:app --host 0.0.0.0 --port 8000
 
 From the repository root, use `python -m uvicorn support_assistant.main:app --host 0.0.0.0 --port 8000`.
 
+Open `http://127.0.0.1:8000/` to use the chatbot. The frontend submits the question to `/ask`, renders the grounded answer, lists retrieved chunk IDs, and displays confidence. The visible product does not expose an endpoint catalog.
+
 ## 11. Example Requests
 
 ### Policy Question
@@ -182,7 +187,7 @@ Response:
 ```json
 {
   "answer": "Based on the retrieved context: Zepto delivers grocery and household essentials to serviceable pin codes within 10 to 30 minutes.",
-  "sources": ["doc_01_chunk_01"],
+  "sources": ["doc_01_chunk_01", "doc_06_chunk_01", "doc_08_chunk_01"],
   "confidence": 1.0
 }
 ```
@@ -214,6 +219,7 @@ A local Dockerfile is provided at `support_assistant/Dockerfile`.
 Build:
 
 ```bash
+cd support_assistant
 docker build -t zepto-support .
 ```
 
@@ -239,9 +245,11 @@ The architecture is:
 ingestion -> embedding -> retrieval -> generation
 ```
 
-- Ingestion: `retrieval.py` reads `docs/*.txt` and adds chunks to ChromaDB.
-- Embedding: `SentenceTransformer("all-MiniLM-L6-v2")` from `retrieval.py`.
-- Retrieval: `retrieve_top_k()` in `retrieval.py` queries the Chroma collection.
-- Generation: `retrieve_and_answer()` and `direct_answer()` in `graph.py` produce the final response in mock mode.
+- Ingestion: `retrieval.py` reads the eight files in `docs/*.txt` and creates one chunk per document with IDs such as `doc_01_chunk_01`.
+- Embedding: `SentenceTransformer("all-MiniLM-L6-v2")` encodes each chunk and each incoming policy query locally.
+- Storage and retrieval: the vectors are stored in the persistent `zepto_policies` ChromaDB collection. `retrieve_and_answer()` imports `retrieve_top_k()` from `retrieval.py`, queries the collection with cosine similarity, and passes the top three chunks to generation.
+- Generation: `graph.py` builds the `StateGraph` with `classify_intent`, `retrieve_and_answer`, and `direct_answer`. The conditional edge routes policy questions to retrieval and general questions directly to `direct_answer`. The optional real path uses the role-context-task-format-length prompt in `prompts.py`; the default mock path returns a deterministic top-chunk template or fixed general response.
+
+Data flows as `docs/*.txt -> local embeddings -> ChromaDB -> LangGraph routing -> grounded response -> browser chat`. Retrieval is never replaced by an LLM. With `MOCK_LLM` unset or set to `1`, intent classification uses the required keyword heuristic and both answer nodes use deterministic local responses. Only when `MOCK_LLM=0` is explicitly set do intent classification and final answer generation call the optional Groq-compatible model; invalid structured output is retried twice before a marked error response.
 
 The committed ChromaDB directory is a regenerable local artifact; importing `retrieval.py` also re-ingests any missing policy chunks from `docs/`.
