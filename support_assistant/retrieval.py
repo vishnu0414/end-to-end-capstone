@@ -32,11 +32,8 @@ def ingest_documents() -> None:
     for doc_path in sorted(docs_dir.glob("*.txt")):
         text = doc_path.read_text(encoding="utf-8")
         doc_id = f"{doc_path.stem}_chunk_01"
-        existing = collection.get(ids=[doc_id], include=[])
-        if existing and existing.get("ids"):
-            continue
         embedding = model.encode(text).tolist()
-        collection.add(
+        collection.upsert(
             ids=[doc_id],
             documents=[text],
             embeddings=[embedding],
