@@ -4,3 +4,10 @@ __pycache__/
 .env
 .ipynb_checkpoints/
 analytics/.matplotlib/
+
+# Regenerated local vector store
+support_assistant/chroma_db/*
+!support_assistant/chroma_db/.gitkeep
+
+# SQLite cache files; keep intentional project databases explicit
+*.sqlite3
